@@ -1,5 +1,9 @@
 import java.util.*;
 import java.io.*;
+import javax.swing.*;
+import javax.swing.text.*;
+import java.awt.event.*;
+import java.awt.*;
 
 class Wordle{
     
@@ -28,71 +32,148 @@ class Wordle{
 
         readWords();
 
-        Scanner reader = new Scanner(System.in);
+        
         
         String answer = pickRandomWord();
 
-        System.out.println(answer+"\n\n\n");
+        int labelX = 65;
+        int labelY = 0;
+        
+        Color backGround = new Color(18,18,19);
+        
+        JFrame frame = new JFrame("Wordle");
+        frame.setSize(260, 500);
+        frame.getContentPane().setBackground(backGround);
+        
+        Font font1 = new Font("SansSerif", Font.BOLD, 32);
 
-        int i = 0;
 
-        while(i<6){
-            
-            
-            System.out.print("Tahmin " + (i+1) + ": ");
-       
-            String guess = reader.nextLine();
 
-            if(guess.length() == 5){
 
-                guess = guess.toUpperCase(new Locale("tr"));
+        JTextField t1 = new JTextField(15);
 
-                if(wordTable.get(guess) == null){
+        t1.setFont(font1);
+        t1.setBackground(backGround);
+        t1.setForeground(Color.white);
 
-                    System.out.print("\u001B[A" + ANSI_DELETE_LINE);
-                    
-                    System.out.print("Böyle bir kelime yok");
-                    
-                    waitSec(1);
+        t1.setBounds(65,0 , 130 , 50);
 
-                    System.out.print("\u001B[G" + ANSI_DELETE_LINE );
-                    
+        t1.setHorizontalAlignment(JTextField.LEFT);
 
-                    continue;
-                }
+        t1.setDocument(new LimitJTextField(5));
 
-                
+        JLabel [][] labels = new JLabel[6][5];
 
-                else if(guess.equals(answer)){
-                    System.out.println("\n\n----Kazandın----");
-                    break;
-                }
+        for (int i = 0; i < labels.length; i++) {
 
-                else{
-                    wordPrint(answer,guess);
-                    i++;
-                    System.out.println();
-                }
+            labelY += 60;
+            labelX = 65;
 
+            for (int j = 0; j < labels[i].length; j++) {
+
+                labels[i][j] = new JLabel();
+                labels[i][j].setFont(font1);
+                labels[i][j].setBounds(labelX,labelY, 26, 50);
+                labelX +=26;
             }
-
-
-            else{
-                
-                
-                System.out.print("\u001B[A" + ANSI_DELETE_LINE);
-                    
-                System.out.print("Kelime 5 harf uzunluğunda olmalıdır");
-                    
-                waitSec(1);
-
-                System.out.print("\u001B[G" + ANSI_DELETE_LINE );
-            }
-
             
         }
 
-        System.out.println("\n\n--Doğru Cevap: " + answer + "---- \n" );
+        
+        
+        
+            
+            
+        t1.addActionListener(new ActionListener() {
+            
+            public int i = 0;
+            public void actionPerformed(ActionEvent e) {
+                
+                
+                if(t1.getText().length() == 5){
+
+                    if(t1.getText().equals(answer)){
+                        t1.setEditable(false);
+                    
+                        JFrame won= new JFrame("Won");
+                        won.setSize(260,100);
+                        won.getContentPane().setBackground(backGround);
+                        JLabel l = new JLabel("YOU WON! Correct Aswer is " + answer);
+                        l.setForeground(Color.green);
+
+                        won.add(l);
+                        won.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    
+                        won.setVisible(true);
+                    }
+                    
+                    else if(wordTable.get(t1.getText()) != null){
+                
+                        for (int j = 0; j < labels[i].length; j++) {
+                            labels[i][j].setOpaque(true);
+                            labels[i][j].setBackground(new Color(58,58,60));
+                            
+                            if(t1.getText().charAt(j) == answer.charAt(j)){
+                                labels[i][j].setForeground(Color.green);
+                                labels[i][j].setText("" + t1.getText().charAt(j));
+                            }
+
+                            else if(answer.indexOf(t1.getText().charAt(j)) != -1){
+                                labels[i][j].setForeground(Color.yellow);
+                                labels[i][j].setText("" + t1.getText().charAt(j));
+                            }
+                
+                            else{
+                                labels[i][j].setForeground(Color.WHITE);
+                                labels[i][j].setText("" + t1.getText().charAt(j));
+                            }
+                                
+                            
+                        }
+                        
+                        i = i+1;
+
+                        t1.setText(null);
+                    
+                    }
+
+                }
+
+                if(i==6){
+                    t1.setEditable(false);
+                    
+                    JFrame wrong = new JFrame("Fail");
+                    wrong.setSize(260,100);
+                    wrong.getContentPane().setBackground(backGround);
+                    JLabel l = new JLabel("YOU LOST! Correct Aswer is " + answer);
+                    l.setForeground(Color.red);
+
+                    wrong.add(l);
+                    wrong.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                    
+                    wrong.setVisible(true);
+                     
+                }
+            }
+        });
+
+        
+        
+        frame.add(t1);
+
+        for (int k = 0; k < labels.length; k++) {
+
+            for (int j = 0; j < labels[k].length; j++) {
+                frame.add(labels[k][j]);
+                
+            }
+            
+        }
+        
+        
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(null);
+        frame.setVisible(true);
 
     }
 
@@ -120,7 +201,7 @@ class Wordle{
                 if(line == null) break;
 
                 if(line.length()==5){
-                    line = line.toUpperCase(new Locale("tr"));
+                    line = line.toUpperCase();
                     wordTable.put(line,line);
                     keyList.add(line);
                 }
@@ -148,42 +229,28 @@ class Wordle{
         return keyList.get(rand.nextInt(keyList.size()-1));
     }
 
-    private void wordPrint(String answer,String guess){
-        
-        System.out.print("\u001B[A" + "\u001B[10C"+ANSI_WHITE);
+    
+    
+}
 
-        for(int i = 0; i<5;i++){
 
-            if(answer.charAt(i) == guess.charAt(i)){
-                System.out.print(ANSI_GREEN_BACKGROUND + guess.charAt(i));
-            }
+class LimitJTextField extends PlainDocument {
+    private int max;
 
-            else if(answer.indexOf(guess.charAt(i)) != -1){
-                System.out.print(ANSI_YELLOW_BACKGROUND + guess.charAt(i));
-            }
-
-            else{
-                System.out.print(ANSI_BLACK_BACKGROUND + guess.charAt(i));
-            }
-
-        }
-
-        System.out.println(ANSI_RESET);
-
+    LimitJTextField(int max) {
+        super();
+        this.max = max;
     }
 
-    private void waitSec(long sec){
-        
-        long startTime;
-        long endTime;
+    public void insertString(int offset, String text, AttributeSet attr) throws BadLocationException {
 
+        if (text == null)
+            return;
 
-        startTime = System.nanoTime();
-        endTime = startTime;
-
-        while(endTime-startTime < sec*1000000000){
-            endTime = System.nanoTime();
+        if ((getLength() + text.length()) <= max) {
+            super.insertString(offset, text.toUpperCase(), attr);
         }
 
     }
+
 }
